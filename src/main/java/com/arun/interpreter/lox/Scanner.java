@@ -58,8 +58,8 @@ class Scanner {
             case '+': addToken(PLUS); break;
             case ';': addToken(SEMICOLON); break;
             case '*': addToken(STAR); break;
-            // look at second character to determine if we’re on a != or merely a !
             case '!':
+                // look at second character to determine if we’re on a != or merely a !
                 addToken(match('=') ? BANG_EQUAL : BANG);
                 break;
             case '=':
@@ -70,6 +70,23 @@ class Scanner {
                 break;
             case '>':
                 addToken(match('=') ? GREATER_EQUAL : GREATER);
+                break;
+            case '/':
+                if (match('/')) {
+                    // A comment goes until the end of the line.
+                    while (peek() != '\n' && !isAtEnd()) advance();
+                } else {
+                    addToken(SLASH);
+                }
+                break;
+            case ' ':
+            case '\r':
+            case '\t':
+                // Ignore whitespace.
+                break;
+            case '\n':
+                // Next line
+                line++;
                 break;
             default:
                 Lox.error(line, "Unexpected character.");
@@ -99,6 +116,12 @@ class Scanner {
 
         current++;
         return true;
+    }
+
+    // lookahead without advancing
+    private char peek() {
+        if (isAtEnd()) return '\0';
+        return source.charAt(current);
     }
 
 }
