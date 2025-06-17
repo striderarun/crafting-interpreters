@@ -88,8 +88,17 @@ class Scanner {
                 // Next line
                 line++;
                 break;
+            // String literals start with "
+            // eg: "arun"
+            case '"': string(); break;
             default:
-                Lox.error(line, "Unexpected character.");
+                // To recognize the beginning of a number lexeme, we look for any digit. It’s kind of tedious to add a case statement for every decimal digit,
+                // so use an if statement in the default case instead
+                if (isDigit(c)) {
+                    number();
+                } else {
+                    Lox.error(line, "Unexpected character.");
+                }
                 break;
         }
     }
@@ -122,6 +131,60 @@ class Scanner {
     private char peek() {
         if (isAtEnd()) return '\0';
         return source.charAt(current);
+    }
+
+    /**
+     * Consume string literals
+     * We consume characters until we hit the " that ends the string.
+     * We also gracefully handle running out of input before the string is closed and report an error for that.
+     * Handle multi-line strings
+     */
+    private void string() {
+        while (peek() != '"' && !isAtEnd()) {
+            if (peek() == '\n') line++;
+            advance();
+        }
+
+        if (isAtEnd()) {
+            Lox.error(line, "Unterminated string.");
+            return;
+        }
+
+        // The closing ".
+        advance();
+
+        // Trim the surrounding quotes and get the actual string value
+        String value = source.substring(start + 1, current - 1);
+        addToken(STRING, value);
+    }
+
+    private boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
+    // Consume number literals
+    // Consume as many digits as we find for the integer part of the literal.
+    // Then we look for a fractional part, which is a decimal point (.) followed by at least one digit.
+    // If we do have a fractional part, again, we consume as many digits as we can find.
+    private void number() {
+        while (isDigit(peek())) advance();
+
+        // Look for a fractional part.
+        if (peek() == '.' && isDigit(peekNext())) {
+            // Consume the "."
+            advance();
+
+            while (isDigit(peek())) advance();
+        }
+
+        addToken(NUMBER,
+                Double.parseDouble(source.substring(start, current)));
+    }
+
+    // Looking past the decimal point requires a second character of lookahead since we don’t want to consume the . until we’re sure there is a digit after it.
+    private char peekNext() {
+        if (current + 1 >= source.length()) return '\0';
+        return source.charAt(current + 1);
     }
 
 }
