@@ -23,6 +23,29 @@ class Scanner {
 
     private final List<Token> tokens = new ArrayList<>();
 
+    // reserved keywords
+    private static final Map<String, TokenType> keywords;
+
+    static {
+        keywords = new HashMap<>();
+        keywords.put("and",    AND);
+        keywords.put("class",  CLASS);
+        keywords.put("else",   ELSE);
+        keywords.put("false",  FALSE);
+        keywords.put("for",    FOR);
+        keywords.put("fun",    FUN);
+        keywords.put("if",     IF);
+        keywords.put("nil",    NIL);
+        keywords.put("or",     OR);
+        keywords.put("print",  PRINT);
+        keywords.put("return", RETURN);
+        keywords.put("super",  SUPER);
+        keywords.put("this",   THIS);
+        keywords.put("true",   TRUE);
+        keywords.put("var",    VAR);
+        keywords.put("while",  WHILE);
+    }
+
     Scanner(String source) {
         this.source = source;
     }
@@ -96,6 +119,9 @@ class Scanner {
                 // so use an if statement in the default case instead
                 if (isDigit(c)) {
                     number();
+                } else if (isAlpha(c)) {
+                    // assuming any lexeme starting with a letter or underscore is an identifier.
+                    identifier();
                 } else {
                     Lox.error(line, "Unexpected character.");
                 }
@@ -187,4 +213,34 @@ class Scanner {
         return source.charAt(current + 1);
     }
 
+    /**
+     * Consume identifiers(user defined) and keywords
+     * A reserved word is an identifier, it’s just one that has been claimed by the language for its own use.
+     *
+     * maximal munch principle: When two lexical grammar rules can both match a chunk of code that the scanner is looking at, whichever one matches the most characters wins.
+     * eg: if we can match 'orchid' as an identifier and 'or' as a keyword, then the former wins
+     *
+     * if the identifier’s lexeme is one of the reserved words, then create a token type specific to the keyword
+     */
+    private void identifier() {
+        while (isAlphaNumeric(peek())) advance();
+
+        String text = source.substring(start, current);
+        TokenType type = keywords.get(text);
+        if (type == null) {
+            // not a reserved keyword, mark as identifier
+            type = IDENTIFIER;
+        }
+        addToken(type);
+    }
+
+    private boolean isAlpha(char c) {
+        return (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
+                c == '_';
+    }
+
+    private boolean isAlphaNumeric(char c) {
+        return isAlpha(c) || isDigit(c);
+    }
 }
