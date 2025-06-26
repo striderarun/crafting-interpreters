@@ -1,0 +1,62 @@
+Context-Free Grammar
+--------------------
+expression     → literal
+               | unary
+               | binary
+               | grouping ;
+
+literal        → NUMBER | STRING | "true" | "false" | "nil" ;
+grouping       → "(" expression ")" ;
+unary          → ( "-" | "!" ) expression ;
+binary         → expression operator expression ;
+operator       → "==" | "!=" | "<" | "<=" | ">" | ">="
+               | "+"  | "-"  | "*" | "/" ;
+
+Ambiguity and the Parsing Game
+-----------------------------
+The above grammar is ambiguous, where different choices of productions can lead to the same string.
+When parsing, ambiguity means the parser may misunderstand the user’s code.
+
+This is a valid string in above grammar: 6 / 3 - 1
+But there are two ways we could have generated it.
+
+binary(literal(6) / (binary(literal(3) - literal(1))))
+binary(binary(literal(6) / literal(3)) - literal(1))
+
+These produce the same strings, but not the same syntax trees, and not the same result.
+
+Grammar with precedence rules
+-----------------------------
+Ambiguity can be removed by defining rules for precedence and associativity. (Read the book for more details)
+
+expression     → equality ;
+equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+term           → factor ( ( "-" | "+" ) factor )* ;
+factor         → unary ( ( "/" | "*" ) unary )* ;
+unary          → ( "!" | "-" ) unary
+               | primary ;
+primary        → NUMBER | STRING | "true" | "false" | "nil"
+               | "(" expression ")" ;
+
+As we go from top to bottom, precedence increases.
+Each rule here only matches expressions at its precedence level or higher.
+
+Recursive Descent Parsing
+-------------------------
+Recursive descent is considered a top-down parser because it starts from the top or outermost grammar rule (here expression) and works its way down into the nested subexpressions before finally reaching the leaves of the syntax tree.
+
+A recursive descent parser is a literal translation of the grammar’s rules straight into imperative code. Each rule becomes a function. The body of the rule translates to code roughly like:
+
+Grammar notation	Code representation
+-------------------------------------------
+Terminal	        Code to match and consume a token
+Nonterminal	        Call to that rule’s function
+|	                if or switch statement
+* or +	            while or for loop
+?	                if statement
+
+
+
+Lexical analysis [Scanner/Lexer] -> Individual characters to Tokens
+Syntactic analysis [Parser] -> Tokens to Parse Trees or AST
